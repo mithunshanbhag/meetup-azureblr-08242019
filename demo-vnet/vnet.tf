@@ -49,8 +49,9 @@ resource "azurerm_resource_group" "azureblr_demo_rg" {
 }
 
 resource "azurerm_virtual_network" "azureblr_demo_vnet" {
-  resource_group_name = "${var.rg_name}"
-  location            = "${var.rg_location}"
+  # adds implicit dependency on the resource group
+  resource_group_name = "${azurerm_resource_group.azureblr_demo_rg.name}"
+  location            = "${azurerm_resource_group.azureblr_demo_rg.location}"
 
   name          = "${var.vnet_name}"
   address_space = "${var.vnet_address_prefix}"

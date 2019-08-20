@@ -1,7 +1,7 @@
 # variables
 
 variable "rg_name" {
-  default = "azureblr-demo-rg"
+  default = "azureblr-demo-rg2"
 }
 
 variable "rg_location" {
@@ -9,7 +9,7 @@ variable "rg_location" {
 }
 
 variable "vnet_name" {
-  default = "azureblr-demo-vnet"
+  default = "azureblr-demo-vnet2"
 }
 
 variable "vnet_address_prefix" {
@@ -48,14 +48,19 @@ resource "azurerm_resource_group" "azureblr_demo_rg" {
   }
 }
 
+# resources from modules
+
 module "azureblr_demo_vnet" {
-  source              = "Azure/vnet/azurerm"
-  resource_group_name = "${var.rg_name}"
-  location            = "${var.rg_location}"
-  vnet_name           = "${var.vnet_name}"
-  address_space       = "${var.vnet_address_prefix}"
-  subnet_prefixes     = "${list(var.web_subnet_address_prefix, var.db_subnet_address_prefix)}"
-  subnet_names        = "${list(var.web_subnet_name, var.db_subnet_name)}"
+  source = "Azure/vnet/azurerm"
+
+  # adds implicit dependency on the resource group
+  resource_group_name = "${azurerm_resource_group.azureblr_demo_rg.name}"
+  location            = "${azurerm_resource_group.azureblr_demo_rg.location}"
+
+  vnet_name       = "${var.vnet_name}"
+  address_space   = "${var.vnet_address_prefix}"
+  subnet_prefixes = "${list(var.web_subnet_address_prefix, var.db_subnet_address_prefix)}"
+  subnet_names    = "${list(var.web_subnet_name, var.db_subnet_name)}"
 
   tags = {
     environment = "testing"

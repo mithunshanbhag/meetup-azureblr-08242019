@@ -13,7 +13,7 @@ variable "vnet_name" {
 }
 
 variable "vnet_address_prefix" {
-  default = ["10.0.0.0/16", "10.1.0.0/16"]
+  default = "10.0.0.0/16"
 }
 
 variable "web_subnet_name" {
@@ -48,21 +48,14 @@ resource "azurerm_resource_group" "azureblr_demo_rg" {
   }
 }
 
-resource "azurerm_virtual_network" "azureblr_demo_vnet" {
+module "azureblr_demo_vnet" {
+  source              = "Azure/vnet/azurerm"
   resource_group_name = "${var.rg_name}"
   location            = "${var.rg_location}"
-
-  name          = "${var.vnet_name}"
-  address_space = "${var.vnet_address_prefix}"
-
-  subnet {
-    name           = "${var.web_subnet_name}"
-    address_prefix = "${var.web_subnet_address_prefix}"
-  }
-  subnet {
-    name           = "${var.db_subnet_name}"
-    address_prefix = "${var.db_subnet_address_prefix}"
-  }
+  vnet_name           = "${var.vnet_name}"
+  address_space       = "${var.vnet_address_prefix}"
+  subnet_prefixes     = "${list(var.web_subnet_address_prefix, var.db_subnet_address_prefix)}"
+  subnet_names        = "${list(var.web_subnet_name, var.db_subnet_name)}"
 
   tags = {
     environment = "testing"

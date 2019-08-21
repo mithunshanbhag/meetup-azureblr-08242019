@@ -23,6 +23,40 @@ module "azureblr_demo_vnet" {
   }
 }
 
+resource "azurerm_public_ip" "azureblr_demo_public_ip" {
+  # adds implicit dependency on the resource group
+  resource_group_name = "${azurerm_resource_group.azureblr_demo_rg.name}"
+  location            = "${azurerm_resource_group.azureblr_demo_rg.location}"
+
+  name              = "${var.public_ip_name}"
+  sku               = "${local.public_ip_sku}"
+  allocation_method = "${local.public_ip_allocation_method}"
+
+  tags = {
+    environment = "testing"
+  }
+}
+
+resource "azurerm_network_security_group" "azureblr_demo_nsg" {
+  # adds implicit dependency on the resource group
+  resource_group_name = "${azurerm_resource_group.azureblr_demo_rg.name}"
+  location            = "${azurerm_resource_group.azureblr_demo_rg.location}"
+
+  name                = "${var.nsg_name}"
+
+  security_rule {
+    name                       = "allow-ssh-inbound"
+    priority                   = 300
+    direction                  = "${local.direction_inbound}"
+    access                     = "${local.access_allow}"
+    protocol                   = "${local.protocol_tcp}"
+    source_port_range          = "${local.port_all}"
+    destination_port_range     = "${local.port_ssh}"
+    source_address_prefix      = "${local.address_prefix_all}"
+    destination_address_prefix = "${var.default_subnet_address_prefix}"
+  }
+}
+
 resource "azurerm_network_interface" "azureblr_demo_network_interface" {
   # adds implicit dependency on the resource group
   resource_group_name = "${azurerm_resource_group.azureblr_demo_rg.name}"
@@ -32,10 +66,17 @@ resource "azurerm_network_interface" "azureblr_demo_network_interface" {
 
   ip_configuration {
     name = "ip-configuration-1"
+
+    # adds implicit dependency on the public ip
+    public_ip_address_id = "${azurerm_public_ip.azureblr_demo_public_ip.id}"
+
     # adds implicit dependency on the vnet resource (created via module)
     subnet_id                     = "${module.azureblr_demo_vnet.vnet_subnets[0]}"
     private_ip_address_allocation = "Dynamic"
   }
+
+  # adds implicit dependency on the network security group
+  network_security_group_id = "${azurerm_network_security_group.azureblr_demo_nsg.id}"
 
   tags = {
     environment = "testing"
@@ -52,7 +93,7 @@ resource "azurerm_virtual_machine" "azureblr_demo_vm" {
   resource_group_name = "${azurerm_resource_group.azureblr_demo_rg.name}"
   location            = "${azurerm_resource_group.azureblr_demo_rg.location}"
 
-  name = "${var.vnet_name}"
+  name = "${var.vm_name}"
 
   network_interface_ids = "${list(azurerm_network_interface.azureblr_demo_network_interface.id)}"
 
@@ -61,14 +102,11 @@ resource "azurerm_virtual_machine" "azureblr_demo_vm" {
   os_profile {
     computer_name  = "${var.vm_name}"
     admin_username = "${var.vm_username}"
+    admin_password = "${var.vm_password}"
   }
 
   os_profile_linux_config {
-    disable_password_authentication = true
-    ssh_keys {
-      key_data = "${tls_private_key.id_rsa.public_key_openssh}"
-      path     = "/home/${var.vm_username}/.ssh/authorized_keys"
-    }
+    disable_password_authentication = false
   }
 
   /*

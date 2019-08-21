@@ -27,3 +27,43 @@ locals {
 }
 
 #endregion platform image
+
+#region public ip
+
+locals {
+  public_ip_sku               = "standard"
+  public_ip_allocation_method = "Static"   # case-sensitive  
+}
+
+#endregion // public ip
+
+#region network security group rules
+
+locals {
+  port_all   = "*"
+  port_http  = "80"
+  port_https = "443"
+  port_ssh   = "22"
+}
+
+locals {
+  address_prefix_all = "*"
+}
+
+locals {
+  protocol_any = "any"
+  protocol_tcp = "tcp"
+  protocol_udp = "udp"
+}
+
+locals {
+  access_allow = "Allow" # case-sensitive
+  access_deny  = "Deny"  # case-sensitive
+}
+
+locals {
+  direction_inbound  = "Inbound"  # case-sensitive
+  direction_outbound = "Outbound" # case-sensitive
+}
+
+#endregion network security group rules

@@ -48,6 +48,10 @@ variable "vm_username" {
   default = "localadmin"
 }
 
+variable "vm_password" {
+  default = "Password123!"
+}
+
 variable "vm_size" {
   default = "standard_d2s_v3"
 }
@@ -66,3 +70,19 @@ variable "managed_disk_size_gb" {
 }
 
 #endregion // managed disk
+
+#region public ip
+
+variable "public_ip_name" {
+  default = "azureblr-demo-public-ip"
+}
+
+#endregion // public ip
+
+#region network security group
+
+variable "nsg_name" {
+  default = "azureblr-demo-nsg"
+}
+
+#endregion // network security group

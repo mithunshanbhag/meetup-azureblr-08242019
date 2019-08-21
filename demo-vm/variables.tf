@@ -48,14 +48,9 @@ variable "vm_username" {
   default = "localadmin"
 }
 
-variable "vm_password" {
-  default = "Password123!"
-}
-
 variable "vm_size" {
   default = "standard_d2s_v3"
 }
-
 
 # endregion // virtual machine
 

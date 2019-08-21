@@ -23,7 +23,7 @@ locals {
   platform_image_publisher = "openlogic"
   platform_image_offer     = "centos"
   platform_image_sku       = "7.6"
-  platform_image_version   = "7.6.20190402"
+  platform_image_version   = "7.6.20190708"
 }
 
 #endregion platform image
@@ -67,3 +67,12 @@ locals {
 }
 
 #endregion network security group rules
+
+#region wp and mariadb
+
+locals {
+  wp_database_name = "wordpress"
+  wp_database_user = "root"  
+}
+
+#endregion // wp and mariadb

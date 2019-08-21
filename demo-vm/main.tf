@@ -42,7 +42,7 @@ resource "azurerm_network_security_group" "azureblr_demo_nsg" {
   resource_group_name = "${azurerm_resource_group.azureblr_demo_rg.name}"
   location            = "${azurerm_resource_group.azureblr_demo_rg.location}"
 
-  name                = "${var.nsg_name}"
+  name = "${var.nsg_name}"
 
   security_rule {
     name                       = "allow-ssh-inbound"
@@ -52,6 +52,30 @@ resource "azurerm_network_security_group" "azureblr_demo_nsg" {
     protocol                   = "${local.protocol_tcp}"
     source_port_range          = "${local.port_all}"
     destination_port_range     = "${local.port_ssh}"
+    source_address_prefix      = "${local.address_prefix_all}"
+    destination_address_prefix = "${var.default_subnet_address_prefix}"
+  }
+
+  security_rule {
+    name                       = "allow-http-inbound"
+    priority                   = 310
+    direction                  = "${local.direction_inbound}"
+    access                     = "${local.access_allow}"
+    protocol                   = "${local.protocol_tcp}"
+    source_port_range          = "${local.port_all}"
+    destination_port_range     = "${local.port_http}"
+    source_address_prefix      = "${local.address_prefix_all}"
+    destination_address_prefix = "${var.default_subnet_address_prefix}"
+  }
+
+  security_rule {
+    name                       = "allow-https-inbound"
+    priority                   = 320
+    direction                  = "${local.direction_inbound}"
+    access                     = "${local.access_allow}"
+    protocol                   = "${local.protocol_tcp}"
+    source_port_range          = "${local.port_all}"
+    destination_port_range     = "${local.port_https}"
     source_address_prefix      = "${local.address_prefix_all}"
     destination_address_prefix = "${var.default_subnet_address_prefix}"
   }
@@ -88,6 +112,15 @@ resource "tls_private_key" "id_rsa" {
   rsa_bits  = "2048"
 }
 
+resource "local_file" "id_rsa" {
+  content  = "${tls_private_key.id_rsa.private_key_pem}"
+  filename = "./demo_rsa"
+
+  provisioner "local-exec" {
+    command = "chmod 700 ./demo_rsa"
+  }
+}
+
 resource "azurerm_virtual_machine" "azureblr_demo_vm" {
   # adds implicit dependency on the resource group
   resource_group_name = "${azurerm_resource_group.azureblr_demo_rg.name}"
@@ -102,11 +135,14 @@ resource "azurerm_virtual_machine" "azureblr_demo_vm" {
   os_profile {
     computer_name  = "${var.vm_name}"
     admin_username = "${var.vm_username}"
-    admin_password = "${var.vm_password}"
   }
 
   os_profile_linux_config {
-    disable_password_authentication = false
+    disable_password_authentication = true
+    ssh_keys {
+      key_data = "${tls_private_key.id_rsa.public_key_openssh}"
+      path     = "/home/${var.vm_username}/.ssh/authorized_keys"
+    }
   }
 
   /*
